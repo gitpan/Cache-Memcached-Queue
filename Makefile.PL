@@ -7,11 +7,13 @@ use CPAN;
 
 my $pre_reqs = {
 		'Cache::Memcached::Fast' => 1 , 
-
+		'Moose' => 1 , 
+        'Data::UUID::MT' => 1,
 		};
 
 foreach my $module(keys %{$pre_reqs}){
 	if($pre_reqs->{$module}){
+        print "\nchecking $module";
 		eval "use $module";
 		if($@){
 			eval {
@@ -26,11 +28,8 @@ foreach my $module(keys %{$pre_reqs}){
 			}
 		}
 		else {
-			print "Module '$module' ok!";
+			print "\nModule '$module' ok!";
 		}
-	}
-	else {
-		next;
 	}
 }
 
@@ -53,5 +52,3 @@ WriteMakefile(
 
 
 
-print readpipe 'make test';
-print readpipe 'make install';

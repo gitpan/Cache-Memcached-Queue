@@ -124,7 +124,7 @@
 .\" ========================================================================
 .\"
 .IX Title "Cache::Memcached::Queue 3"
-.TH Cache::Memcached::Queue 3 "2012-06-25" "perl v5.12.4" "User Contributed Perl Documentation"
+.TH Cache::Memcached::Queue 3 "2012-06-28" "perl v5.12.4" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -133,7 +133,7 @@
 Cache::memcached::Queue \- Create queues and save them on memcached!
 .SH "VERSION"
 .IX Header "VERSION"
-Version 0.0.1 alpha
+Version 0.0.2 alpha
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 This works by taking advantage of Memcached infrastructure. In other words, the 'keys' 
@@ -164,7 +164,8 @@ This module implements a simple scheme of a Queue.
 \&                                                id => 1,
 \&                                        )\->init;
 \&                        
-\&                                        
+\&    $q\->load();#load data from Memcached
+\&
 \&    $q\->enq(\*(Aqduke\*(Aq); #enqueue \*(Aqduke\*(Aq. 
 \&
 \&    $q\->enq(\*(Aqnuken\*(Aq); #enqueue \*(Aqnuke\*(Aq and this never expires on memcached 
@@ -198,7 +199,8 @@ Otherwise returns undef and trows an exception
 .IX Subsection "load()"
 Try to load the queue pointers from Memcached. If works, will return true. Otherwise 
 will return false.
-.PP
+.SS "enq($parameters)"
+.IX Subsection "enq($parameters)"
 Try to make a 'enqueue' operation. That means tha 'last' index pointer will be readjusted
 to the next index. So the value can be recorded on Memcached.
 .PP
@@ -297,9 +299,3 @@ under the terms of either: the \s-1GNU\s0 General Public License as published
 by the Free Software Foundation; or the Artistic License.
 .PP
 See http://dev.perl.org/licenses/ for more information.
-.SH "POD ERRORS"
-.IX Header "POD ERRORS"
-Hey! \fBThe above document had some coding errors, which are explained below:\fR
-.IP "Around line 196:" 4
-.IX Item "Around line 196:"
-Unknown directive: =head

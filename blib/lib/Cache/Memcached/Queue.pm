@@ -45,12 +45,12 @@ Cache::memcached::Queue - Create queues and save them on memcached!
 
 =head1 VERSION
 
-Version 0.0.1 alpha
+Version 0.0.2 alpha
 
 =cut
 
 BEGIN {
-our $VERSION = '0.0.1';
+our $VERSION = '0.0.2';
 }
 
 =head1 DESCRIPTION
@@ -95,7 +95,8 @@ This module implements a simple scheme of a Queue.
 					  	id => 1,
 					)->init;
     			
-					
+    $q->load();#load data from Memcached
+
     $q->enq('duke'); #enqueue 'duke'. 
 
     $q->enq('nuken'); #enqueue 'nuke' and this never expires on memcached 
@@ -159,6 +160,8 @@ sub init {
     return $self;
     }
 
+
+
 =head2 load()
 
 Try to load the queue pointers from Memcached. If works, will return true. Otherwise 
@@ -193,7 +196,7 @@ sub load {
 
 
 
-=head enq($parameters)
+=head2 enq($parameters)
 
 Try to make a 'enqueue' operation. That means tha 'last' index pointer will be readjusted
 to the next index. So the value can be recorded on Memcached.
@@ -479,5 +482,7 @@ See http://dev.perl.org/licenses/ for more information.
 
 
 =cut
+
+__PACKAGE__->meta->make_immutable;
 
 1;    # End of Cache::memcached::Queue
