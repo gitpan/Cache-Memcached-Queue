@@ -45,12 +45,14 @@ Cache::memcached::Queue - Create queues and save them on memcached!
 
 =head1 VERSION
 
-Version 0.0.2 alpha
+Version 0.0.3
+
+alpha version
 
 =cut
 
 BEGIN {
-our $VERSION = '0.0.2';
+our $VERSION = '0.0.3';
 }
 
 =head1 DESCRIPTION
@@ -264,9 +266,7 @@ of queue will be removed from queue, and the first index pointer from queue will
 be moved to the next index. If works, returns the 'dequeued' 
 value, otherwise returns undef.
 
-
 =cut
-
 
 sub deq {
     my ( $self, ) = @_;
@@ -281,7 +281,6 @@ sub deq {
             say "Sorry, but was not possible to dequeue!";
     }
     else {
-        
         my $index_from_first = $1 if $self->first =~ /(\d+)$/;
         $index_from_first += 1 if $self->size > 1;
         #mounting the new first index.

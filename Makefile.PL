@@ -21,10 +21,10 @@ foreach my $module(keys %{$pre_reqs}){
 				CPAN::install $module;
 			};
 			if($@){
-				cluck "Problemas para instalar o modulo '$module' - $@";
+				cluck "Problems to install module '$module' - $@";
 			}
 			else {
-				print "O modulo '$module' instalado!\n";
+				print "'$module' was installed!\n";
 			}
 		}
 		else {
@@ -44,7 +44,11 @@ WriteMakefile(
       ? ('LICENSE'=> 'perl')
       : ()),
     PL_FILES            => {},
-    PREREQ_PM => {'Test::More' => 0}, 
+    PREREQ_PM => {'Test::More' => 0,
+                  'Moose' => 0,
+                  'Cache::Memcached::Fast' => 0,
+                  'Data::UUID::MT' => 0,
+                }, 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Cache-Memcached-Queue-*' },
 );
