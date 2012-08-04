@@ -32,8 +32,9 @@ has id_prefix => (
 
 has max_enq => (
     is      => 'rw',
-    default => 10
+    default => 0,
 );
+
 has servers => ( is => 'rw', );
 
 has size    => ( is => 'rw' );
@@ -41,18 +42,18 @@ has size    => ( is => 'rw' );
 
 =head1 NAME
 
-Cache::memcached::Queue - Create queues and save them on memcached!
+Cache::Memcached::Queue - Create queues and save them on memcached!
 
 =head1 VERSION
 
-Version 0.0.3
+Version 0.0.4
 
 alpha version
 
 =cut
 
 BEGIN {
-our $VERSION = '0.0.3';
+our $VERSION = '0.0.4';
 }
 
 =head1 DESCRIPTION
@@ -71,7 +72,8 @@ struct on his name: <PREFIX>_<ID>_<INDEX_NUMBER OR NAME>
 PREFIX - This is defined by the 'id_prefix' attribute. The default value is 'CMQID_'
 
 =item
-ID - This is defined by the 'id' attribute.
+ID - This is defined by the 'id' attribute. If the 'id' attribute was not defined, a UUID
+will be defined for it automatically.
 
 =item
 INDEX_NUMBER OR NAME - If some data is a item in the queue, so this must be a sequential number,
@@ -89,19 +91,31 @@ for example: 'CMQID_1_first' This is the pointer to the first element in queue.
 This module implements a simple scheme of a Queue.
 
 
-    use Cache::memcached::Queue;
+    use Cache::Memcached::Queue;
 
-    my $q = Cache::memcached::Queue->new( name => 'foo', #this is mandatory
-						max_enq => 10,
-						config_file => 'path_to_config/configfile.cfg',
+    my $q = Cache::Memcached::Queue->new( name => 'foo', #this is mandatory
+						max_enq => 10, 
+						config_file => 'path_to_config/configfile.cfg', 
 					  	id => 1,
+                        prefix => 'MYQUEUE',
 					)->init;
+    #or
+
+    my $q = Cache::Memcached::Queue->new( name => 'foo', #this is mandatory
+						max_enq => 10, 
+						servers => [{address => '192.168.1.130',[other options]},{address => ...},...], #see 
+					  	id => 1,
+                        PREFIX => 'MYQUEUE';
+					)->init;
+
+						
+
     			
     $q->load();#load data from Memcached
 
-    $q->enq('duke'); #enqueue 'duke'. 
+    $q->enq({value=>'duke'}); #enqueue 'duke'. 
 
-    $q->enq('nuken'); #enqueue 'nuke' and this never expires on memcached 
+    $q->enq({value=>'nuken'}); #enqueue 'nuke' and this never expires on memcached 
 
     $q->show; #show all items from queue. In this case: 'duke'(first element) and 'nuken'(last element).
 
@@ -238,7 +252,7 @@ sub enq {
     if($size > 0){
         $size += 1;
     }   
-    if(defined($self->max_enq) && $size > $self->max_enq ){
+    if(defined($self->max_enq) && $self->max_enq >0 && $size > $self->max_enq ){
         say "The queue is full!";
     }
     else {
@@ -337,7 +351,7 @@ sub show {
 
 =head2 cleanup()
 
-Dequeue everything!
+Cleanup everything!
 
 
 =cut
@@ -440,7 +454,7 @@ automatically be notified of progress on your bug as I make changes.
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Cache::memcached::Queue
+    perldoc Cache::Memcached::Queue
 
 
 You can also look for information at:
@@ -484,4 +498,4 @@ See http://dev.perl.org/licenses/ for more information.
 
 __PACKAGE__->meta->make_immutable;
 
-1;    # End of Cache::memcached::Queue
+1;    # End of Cache::Memcached::Queue

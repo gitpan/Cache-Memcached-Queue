@@ -6,9 +6,10 @@ use Carp qw/confess cluck/;
 use CPAN;
 
 my $pre_reqs = {
-		'Cache::Memcached::Fast' => 1 , 
-		'Moose' => 1 , 
-        'Data::UUID::MT' => 1,
+		'Cache::Memcached::Fast' => 0 , 
+		'Moose' => 0 , 
+        'Data::UUID::MT' => 0,
+        'feature' => 0,
 		};
 
 foreach my $module(keys %{$pre_reqs}){
@@ -48,6 +49,7 @@ WriteMakefile(
                   'Moose' => 0,
                   'Cache::Memcached::Fast' => 0,
                   'Data::UUID::MT' => 0,
+                  'feature' => 0,
                 }, 
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Cache-Memcached-Queue-*' },
