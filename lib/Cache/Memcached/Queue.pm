@@ -46,14 +46,14 @@ Cache::Memcached::Queue - Create queues and save them on memcached!
 
 =head1 VERSION
 
-Version 0.0.4
+Version 0.0.5
 
 alpha version
 
 =cut
 
 BEGIN {
-our $VERSION = '0.0.4';
+our $VERSION = '0.0.5';
 }
 
 =head1 DESCRIPTION
@@ -97,7 +97,7 @@ This module implements a simple scheme of a Queue.
 						max_enq => 10, 
 						config_file => 'path_to_config/configfile.cfg', 
 					  	id => 1,
-                        prefix => 'MYQUEUE',
+                        id_prefix => 'MYQUEUE',
 					)->init;
     #or
 
@@ -105,7 +105,7 @@ This module implements a simple scheme of a Queue.
 						max_enq => 10, 
 						servers => [{address => '192.168.1.130',[other options]},{address => ...},...], #see 
 					  	id => 1,
-                        PREFIX => 'MYQUEUE';
+                        id_prefix => 'MYQUEUE';
 					)->init;
 
 						
