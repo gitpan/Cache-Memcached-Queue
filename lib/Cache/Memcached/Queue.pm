@@ -42,18 +42,18 @@ has size    => ( is => 'rw' );
 
 =head1 NAME
 
-Cache::Memcached::Queue - Create queues and save them on memcached!
+Cache::Memcached::Queue - Very simple way to create multiple queues and save them on Memcached
 
 =head1 VERSION
 
-Version 0.0.5
+Version 0.0.6
 
 alpha version
 
 =cut
 
 BEGIN {
-our $VERSION = '0.0.5';
+our $VERSION = '0.0.6';
 }
 
 =head1 DESCRIPTION
@@ -62,7 +62,7 @@ This works by taking advantage of Memcached infrastructure. In other words, the 
 will be strings that are names of indexes for some basic values that are sufficient to
 represent a queue structure. This basic values are: first, last, size and max_enq. 
 
-In order to have multiples queues in the same Memcached server, a prefix are added 
+In order to have multiple queues in the same Memcached server, a prefix are added 
 to every index on keys of Memcached. So, every key in memcached have the following 
 struct on his name: <PREFIX>_<ID>_<INDEX_NUMBER OR NAME>
 
@@ -93,48 +93,26 @@ This module implements a simple scheme of a Queue.
 
     use Cache::Memcached::Queue;
 
-    my $q = Cache::Memcached::Queue->new( name => 'foo', #this is mandatory
+    my $q = Cache::Memcached::Queue->new( name => 'foo', 
 						max_enq => 10, 
-						config_file => 'path_to_config/configfile.cfg', 
+						servers => [{address => '127.0.0.1:11211'}, #other Cache::Memcached::Fast options here... ], 
 					  	id => 1,
                         id_prefix => 'MYQUEUE',
 					)->init;
-    #or
-
-    my $q = Cache::Memcached::Queue->new( name => 'foo', #this is mandatory
-						max_enq => 10, 
-						servers => [{address => '192.168.1.130',[other options]},{address => ...},...], #see 
-					  	id => 1,
-                        id_prefix => 'MYQUEUE';
-					)->init;
-
-						
 
     			
-    $q->load();#load data from Memcached
+    #ENQUEUE
+    #do this
+    $q->enq({value => $somevalue});
 
-    $q->enq({value=>'duke'}); #enqueue 'duke'. 
+    #DEQUEUE
+    my $queue_first_value = $q->deq();
 
-    $q->enq({value=>'nuken'}); #enqueue 'nuke' and this never expires on memcached 
+    #WHAT'S THE SIZE OF MY QUEUE ?
+    my $size = $q->size();
 
-    $q->show; #show all items from queue. In this case: 'duke'(first element) and 'nuken'(last element).
-
-    $q->deq; #deqeue 'duke'. 
-
-    $q->show; #show all items from queue. In this case: 'nuke'(first and last element from queue).
-
-or
-
-    $q->enq({ qid => 1, #queue id = 1
-                value => 'Duke'},);
-    $q->enq({ qid => 2, #queue id = 2
-                value => 'Nuken'},);
-
-    $q->deq({qid => 1}); #brings 'Duke'
-
-    $q->deq({qid => 1}); #brings 'queue empty'
-
-    $q->deq({qid => 2}); #brings 'Nuken'
+    #CLEANUP
+    $q->cleanup(); #removes everything from object and from Memcached
 
 
 	
@@ -149,7 +127,7 @@ Otherwise returns undef and trows an exception
 sub init {
     my ( $self, ) = @_;
     $self->memcached( Cache::Memcached::Fast->new( {servers => $self->servers }) )
-                                    or confess "Can't load from memcached!";
+                                    or confess "Can't load from memcached! $@";
     if(!defined($self->id) || !$self->id){
        my $uuid_obj = Data::UUID::MT->new();
        $self->id( $uuid_obj->create_string() );
@@ -190,7 +168,7 @@ sub load {
     my ( $ok, $id ) = ( 0, $self->id );
     
     if( !defined($id) || !$id ){
-        confess "You must define an id!";    
+        confess "Can't load without the id!";    
     }
     else {
         my $real_id = $self->id_prefix . "$id\_";
@@ -246,14 +224,13 @@ sub enq {
     my ( $ok, $expire, ) = ( 0, undef, undef );
     #validando parametros
 
-
     $self->load();
     my $size = $self->size;
     if($size > 0){
         $size += 1;
     }   
     if(defined($self->max_enq) && $self->max_enq >0 && $size > $self->max_enq ){
-        say "The queue is full!";
+        say "The queue '".$self->id_prefix."' is full!";
     }
     else {
 
@@ -289,7 +266,7 @@ sub deq {
     my $first_index = $self->first;
     my $value = $self->memcached->get($first_index);
     if(!defined($self->size) || $self->size == 0 ){
-        say "Can't deque because the queue is empty!";
+        say "Can't deque because the queue '".$self->id_prefix."' is empty!";
     }
     elsif(!$self->memcached->delete($first_index) ){
             say "Sorry, but was not possible to dequeue!";
@@ -330,7 +307,7 @@ sub show {
     my ( $self, ) = @_;
     $self->load;
     if(!defined($self->size) || $self->size == 0){
-        say "The queue is empty!";
+        say "The queue '".$self->id_prefix."' is empty!";
     }
     else {
         my $first_index = $1 if $self->first =~ /(\d+)$/;
@@ -361,7 +338,7 @@ sub cleanup {
     my ( $self, ) = @_;
     $self->load;
     if(!defined($self->size) || $self->size == 0){
-        say "The queue is empty!";
+        say "The queue '".$self->id_prefix."' is empty!";
     }
     else {
         foreach my $i(1..$self->size){
@@ -375,6 +352,8 @@ sub cleanup {
 
 
 =head2 save($parameters)
+
+WARNING! THIS IS A INTERNAL METHOD!  
 
 Try to save queue pointers on Memcached. The parameters came on arrayref, when
 each position of arrayref is a name of attribute that must be saved. This parameters 
@@ -426,7 +405,7 @@ sub save {
                 $index = $k;
             }
             if(!$self->memcached->set($index,$self->{$k})){
-                say "";
+                cluck "Is not possible to save '$k' parameter! $@ $!";
             }
             else {
                 $ok = 1;
@@ -446,8 +425,6 @@ Andre Garcia Carneiro, C<< <bang at cpan.org> >>
 Please report any bugs or feature requests to C<bug-cache-memcached-queue at rt.cpan.org>, or through
 the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Cache-memcached-Queue>.  I will be notified, and then you'll
 automatically be notified of progress on your bug as I make changes.
-
-
 
 
 =head1 SUPPORT
@@ -477,15 +454,19 @@ L<http://cpanratings.perl.org/d/Cache-memcached-Queue>
 
 L<http://search.cpan.org/dist/Cache-memcached-Queue/>
 
+or send an e-mail to andregarciacarneiro@gmail.com
+
+
 =back
 
 
-=head1 ACKNOWLEDGEMENTS
+=head1 TODO
+
+ Test all stuff with threads.
 
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2011 Andre Garcia Carneiro.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published
