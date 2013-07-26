@@ -3,18 +3,18 @@
 
 =head1 NAME
 
-Cache::memcached::Queue - Create queues and save them on memcached!
+Cache::Memcached::Queue - Create queues and save them on memcached!
 
 =head1 VERSION
 
-Version 0.1.2
+Version 0.1.3
 
 beta version
 
 =cut
 
 BEGIN {
-our $VERSION = '0.1.2';
+our $VERSION = '0.1.3';
 }
 
 =head1 DESCRIPTION
@@ -51,9 +51,9 @@ for example: 'CMQID_1_first' This is the pointer to the first element in queue.
 This module implements a simple scheme of a Queue.
 
 
-    use Cache::memcached::Queue;
+    use Cache::Memcached::Queue;
 
-    my $q = Cache::memcached::Queue->new( name => 'foo', #this is mandatory
+    my $q = Cache::Memcached::Queue->new( name => 'foo', #this is mandatory
 						max_enq => 10,
 						config_file => 'path_to_config/configfile.cfg',
 					  	id => 1,
@@ -212,7 +212,7 @@ automatically be notified of progress on your bug as I make changes.
 
 You can find documentation for this module with the perldoc command.
 
-    perldoc Cache::memcached::Queue
+    perldoc Cache::Memcached::Queue
 
 
 You can also look for information at:
@@ -244,7 +244,7 @@ L<http://search.cpan.org/dist/Cache-memcached-Queue/>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2011 Andre Garcia Carneiro.
+Copyright 2013 Andre Garcia Carneiro.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of either: the GNU General Public License as published
@@ -561,4 +561,4 @@ sub save {
 
 __PACKAGE__->meta->make_immutable;
 
-1;    # End of Cache::memcached::Queue
+1;    # End of Cache::Memcached::Queue

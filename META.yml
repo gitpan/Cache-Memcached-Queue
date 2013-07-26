@@ -19,8 +19,10 @@ no_index:
     - inc
 requires:
   Cache::Memcached::Fast: 0
+  Data::Serializer: 0
   Data::UUID::MT: 0
   Moose: 0
   Test::More: 0
+  common::sense: 0
   feature: 0
-version: v0.1.2
+version: v0.1.3
