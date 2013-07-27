@@ -7,15 +7,13 @@ Cache::Memcached::Queue - Create queues and save them on memcached!
 
 =head1 VERSION
 
-Version 0.1.3
+Version 0.1.4
 
 beta version
 
 =cut
 
-BEGIN {
-our $VERSION = '0.1.3';
-}
+
 
 =head1 DESCRIPTION
 
@@ -99,7 +97,7 @@ Try to load the queue pointers from Memcached. If works, will return true. Other
 will return false.
 
 
-=head2 enq( %parameters or $value )
+=head2 enq( HashRef $parameters or SCALAR $value )
 
 Try to make a 'enqueue' operation. That means tha 'last' index pointer will be readjusted
 to the next index. So the value can be recorded on Memcached.
@@ -150,11 +148,11 @@ exists, it will be showed. If not, a exception will be thrown .
 
 =head2 cleanup()
 
-Dequeue everything!
+Dequeue everything! No parameters! Returns true, if it's all right! Otherwise, returns false/throws an exception
 
 
 
-=head2 save($parameters)
+=head2 save( ArrayRef $parameters )
 
 Try to save queue pointers on Memcached. The parameters came on arrayref, when
 each position of arrayref is a name of attribute that must be saved. This parameters 
@@ -183,6 +181,41 @@ last - As the same way, this is the last index of the queue.
 If everything work well the method returns true. Otherwise returns false.
 
 
+=head2 iterate(CODE $action, ArrayRef $action_params)
+
+ That method is a 'handler'. You can treat all values in another subroutine/static method, passing
+two parameters:
+
+=over
+
+=item * action: this parameter MUST be a CODE reference. Example:
+
+										#EX1: $q->iterate( 
+											sub { 	
+													my ($index,$value,$params) = @_;
+													#do something with this!!!
+											}
+
+										#EX2: $q->iterate( \&somesubroutine,$myparams) ;
+											sub somesubroutine {
+												my ($index,$value,$params) = @_;
+												#do something cool!
+											}
+
+=item * action_params: This can be a custom parameters. All yours! You need pass this as a ArrayRef!
+
+
+
+=back 
+
+
+ So, by default, every index and values that are in your queue are passed together with your customized parameters.
+
+ If you pass everything right, your 'action' will be performed! Otherwise, an exception will be throwed.
+
+=cut
+
+
 
 
 =head1 AUTHOR
@@ -204,6 +237,9 @@ automatically be notified of progress on your bug as I make changes.
 =item Serialization support is implemented
 
 =item If you pass 'complex' data structure(hashes, arrays, objects etc), the value will be serialized even serialize attribute is false;
+
+=item The new method 'iterator' allows delegate to other subroutine/static method queue data.
+
 
 =back
 
@@ -239,9 +275,6 @@ L<http://search.cpan.org/dist/Cache-memcached-Queue/>
 
 
 
-=head1 ACKNOWLEDGEMENTS
-
-
 =head1 LICENSE AND COPYRIGHT
 
 Copyright 2013 Andre Garcia Carneiro.
@@ -262,9 +295,13 @@ use Moose;
 use Carp qw/confess cluck/;
 use feature qw/say switch/;
 use Cache::Memcached::Fast;
-use Data::Dumper;
 use Data::UUID::MT;
 use Data::Serializer;
+#use Data::Dumper;
+
+BEGIN {
+	our $VERSION = '0.1.4';
+}
 
 has config_file => ( is => 'rw' );
 
@@ -388,7 +425,7 @@ sub enq {
     my ( $self, $parameters ) = @_;
     my ( $ok, $expire, ) = ( 0, undef, undef );
     #validando/transformando os parametros
-	if(defined($parameters) && ref($parameters) ne '' ){
+	if(defined($parameters) && ref($parameters) eq '' ){
 		my $h = $parameters;
 		$parameters = {value => $h};
 		$self->serialize(1);
@@ -508,17 +545,27 @@ sub show {
 
 sub cleanup {
     my ( $self, ) = @_;
+	my $ok = 0;
     $self->load;
     if(!defined($self->size) || $self->size == 0){
         say "The queue is empty!";
     }
     else {
+		my $problems = 0;
         foreach my $i(1..$self->size){
             #mounting index for memcached
             my $mc_index = $self->qid . '_' . $i;
-            my $value = $self->deq;
+            my $value = undef;
+			if(!($value = $self->deq)){
+				$problems = 1;
+				last;
+			}
         }
+		if(!$problems){
+			$ok = 1;
+		}
     }
+	return $ok;
 }
 
 
@@ -559,6 +606,39 @@ sub save {
 
 
 
+sub iterate {
+	my ($self,$action,$action_params) = @_;
+	if( (!defined($action) || !$action ) ||  
+		(defined($action) && ref($action) !~ /CODE/)
+	){
+		confess "'action' MUST be a CODE reference!";
+	}
+	elsif(defined($action_params) && ref($action_params) !~ /ARRAY/){
+		confess "'action_parameters' MUST be ArrayRef"; 
+	}
+	elsif($self->size == 0){
+		warn "Queue '" . $self->id_prefix . $self->id . "' is empty!";
+	}
+	else {
+		my $first_index = $1 if $self->first =~ /(\d+)$/;
+	    my $last_index = $1 if $self->last =~ /(\d+)$/;
+		say "The queue is " . $self->id_prefix . $self->id;
+	    foreach my $i($first_index .. $last_index){
+	    	#mounting index for memcached
+	    	my $mc_index = $self->id_prefix . $self->id . '_' . $i;
+	    	my $value = $self->memcached->get($mc_index);
+	    	if(!defined($value)){
+	    		confess "An error occured trying make a 'get' operation. No value found for '$mc_index' index";
+	    	}
+			$action->($mc_index,$value,$action_params);
+	    }
+	}
+}
+
+
+
+
 __PACKAGE__->meta->make_immutable;
 
 1;    # End of Cache::Memcached::Queue
+

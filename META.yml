@@ -25,4 +25,4 @@ requires:
   Test::More: 0
   common::sense: 0
   feature: 0
-version: v0.1.3
+version: v0.1.4
