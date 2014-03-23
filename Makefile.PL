@@ -16,27 +16,27 @@ my $pre_reqs = {
 		
 		};
 
-foreach my $module(keys %{$pre_reqs}){
-	if($pre_reqs->{$module}){
-        print "\nchecking $module";
-		eval "use $module";
-		if($@){
-			eval {
-				print "Instalando o modulo $module\n";
-				CPAN::install $module;
-			};
-			if($@){
-				cluck "Problems to install module '$module' - $@";
-			}
-			else {
-				print "'$module' was installed!\n";
-			}
-		}
-		else {
-			print "\nModule '$module' ok!";
-		}
-	}
-}
+#foreach my $module(keys %{$pre_reqs}){
+#	if($pre_reqs->{$module}){
+#        print "\nchecking $module";
+#		eval "use $module";
+#		if($@){
+#			eval {
+#				print "Instalando o modulo $module\n";
+#				CPAN::install $module;
+#			};
+#			if($@){
+#				cluck "Problems to install module '$module' - $@";
+#			}
+#			else {
+#				print "'$module' was installed!\n";
+#			}
+#		}
+#		else {
+#			print "\nModule '$module' ok!";
+#		}
+#	}
+#}
 
 
 
